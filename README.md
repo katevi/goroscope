@@ -1,6 +1,6 @@
 # goroscope
 
-This application is a simple chat bot for Telegram that will return funny horoscopes. Made with Go.
+This application is a simple chat bot for Telegram that will return funny horoscopes. You can access it by the following [link](https://t.me/goroscope_katevi_bot).
 
 ## tools
 - bot is made with Go

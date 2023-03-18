@@ -35,7 +35,7 @@ func main() {
 
 	for update := range updates {
 		if update.Message != nil {
-			log.Printf("An update was received: %s", update.Message)
+			log.Printf("A message %s was received from %v", update.Message.Text, update.Message.From)
 		}
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
