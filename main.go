@@ -1,18 +1,60 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
-	"math/rand"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
+	"goroscope.bot/horoscope"
 )
 
 const (
 	TELEGRAM_BOT_TOKEN = "TELEGRAM_BOT_TOKEN"
 )
+
+func main() {
+	bot := configureBot()
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+	updates := bot.GetUpdatesChan(u)
+
+	for update := range updates {
+		log.Printf("A message %s was received from %v", update.Message.Text, update.Message.From)
+		msg := makeServiceHandler(context.Background(), update)
+		bot.Send(msg)
+	}
+}
+
+func makeServiceHandler(ctx context.Context, update tgbotapi.Update) tgbotapi.MessageConfig {
+	switch update.Message.Text {
+	case "/start":
+		greetingMsg := "Good morning to your majesty."
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
+		msg.ReplyToMessageID = update.Message.MessageID
+		return msg
+	case "/goroscope":
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, horoscope.GenerateHoroscope())
+		msg.ReplyToMessageID = update.Message.MessageID
+		return msg
+	default:
+		repeatMsg := "Could you please repeat your wisdom, sir."
+		return tgbotapi.NewMessage(update.Message.Chat.ID, repeatMsg)
+	}
+}
+
+func configureBot() *tgbotapi.BotAPI {
+	bot, err := tgbotapi.NewBotAPI(getToken(TELEGRAM_BOT_TOKEN))
+	if err != nil {
+		log.Fatalf("Error occurred during bot initialization %s ", err)
+	}
+	addMyCommands(bot)
+	bot.Debug = true
+	log.Printf("Authorized on account %s", bot.Self.UserName)
+	return bot
+}
 
 func getToken(key string) string {
 	err := godotenv.Load(".env")
@@ -22,81 +64,14 @@ func getToken(key string) string {
 	return os.Getenv(key)
 }
 
-func main() {
-	bot, err := tgbotapi.NewBotAPI(getToken(TELEGRAM_BOT_TOKEN))
+func addMyCommands(bot *tgbotapi.BotAPI) {
+	myCommandsConfig := tgbotapi.SetMyCommandsConfig{Commands: []tgbotapi.BotCommand{
+		{Command: "/start", Description: "get introduction"},
+		{Command: "/goroscope", Description: "get goroscope"},
+	}, LanguageCode: "en"}
+
+	resp, err := bot.Request(myCommandsConfig)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to receive response from bot %v", resp)
 	}
-	bot.Debug = true
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
-
-	updates := bot.GetUpdatesChan(u)
-
-	for update := range updates {
-		if update.Message != nil {
-			log.Printf("A message %s was received from %v", update.Message.Text, update.Message.From)
-		}
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generateHoroscope())
-		msg.ReplyToMessageID = update.Message.MessageID
-
-		bot.Send(msg)
-	}
-}
-
-// Goroscope generation
-
-var (
-	creatures = []string{"Red Dragon", "Black dragon", "Peasant",
-		"Goblin", "Dwarf", "Orc", "Gargoyle", "Ghost", "Genie", "Medusa",
-		"Halfling", "Boar", "Iron Golem", "Roc", "Orc", "Wolf", "Ogre", "Troll", "Cyclop",
-		"Unicorn", "Phoenix", "Sprite", "Dwarf"}
-	plagueWeek        = "Plague"
-	weekOf            = append(creatures, plagueWeek)
-	necromances       = []string{"Zombie", "Skeleton", "Mummy", "Vampire", "Lich"}
-	dwellingsSentence = "All dwellings increase population."
-)
-
-func generateHoroscope() string {
-	fst, seed := generateFirstSentence()
-	snd := generateSecondSentence(seed)
-	return fmt.Sprint(fst, snd)
-}
-
-func generateFirstSentence() (sentence, seed string) {
-	weekOf := pickRandomElement(weekOf)
-	return fmt.Sprintf("Astrologers proclaim the week of %s. ", weekOf), weekOf
-}
-
-func generateSecondSentence(seed string) string {
-	if seed == plagueWeek {
-		return generateNecromancesIncreased()
-	}
-	return generateCreaturesIncreased(seed)
-}
-
-func generateNecromancesIncreased() string {
-	return fmt.Sprintf("%s growth +%d. ", pickRandomElement(necromances), rand.Intn(10))
-}
-
-func generateCreaturesIncreased(seed string) string {
-	creaturesIncreased := fmt.Sprintf("%s growth +%d. ", seed, rand.Intn(10))
-	if randBool() {
-		return fmt.Sprint(creaturesIncreased, dwellingsSentence)
-	}
-	return creaturesIncreased
-}
-
-// Helper functions for generation
-
-func randBool() bool {
-	return rand.Intn(2) == 1
-}
-
-func pickRandomElement(array []string) string {
-	randomIndex := rand.Intn(len(array))
-	return array[randomIndex]
 }
