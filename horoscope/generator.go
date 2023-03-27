@@ -73,7 +73,7 @@ func generateGoodWeekPopulation(seed string) string {
 	if tossCoin() {
 		return creaturesIncreased
 	}
-	creaturesMultipled := fmt.Sprintf("%s population %s.", seed, pickRandomElement(multiples))
+	creaturesMultipled := fmt.Sprintf("%s population %s. ", seed, pickRandomElement(multiples))
 	if tossCoin() {
 		return fmt.Sprint(creaturesMultipled, dwellingsSentence)
 	}
