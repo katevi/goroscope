@@ -37,11 +37,9 @@ func handleUpdate(ctx context.Context, update tgbotapi.Update) tgbotapi.MessageC
 	case startCommand:
 		greetingMsg := "Good morning to your majesty."
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
-		msg.ReplyToMessageID = update.Message.MessageID
 		return msg
 	case goroscopeCommand:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, horoscope.GenerateHoroscope())
-		msg.ReplyToMessageID = update.Message.MessageID
 		return msg
 	default:
 		repeatMsg := "Could you please repeat your wisdom, sir."
