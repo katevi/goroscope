@@ -1,4 +1,4 @@
-# goroscope ![build](https://github.com/katevi/goroscope/actions/workflows/go.yml/badge.svg?style=shield??branch=master)
+# goroscope ![build](https://github.com/katevi/goroscope/actions/workflows/go.yml/badge.svg?style=shield??branch=master)[![Docker Image Size](https://badgen.net/docker/size/katevi/goroscope/?icon=docker&label=image%20size)](https://hub.docker.com/r/katevi/goroscope)
 
 This application is a simple chat bot for Telegram that will return funny horoscopes. You can access it by the following [link](https://t.me/goroscope_katevi_bot).
 
@@ -30,7 +30,7 @@ TELEGRAM_BOT_TOKEN=<your token>
 4. Run following commands in the root of repository
 ```
 docker build -t your-favorite-tag
-docker run -v <abolute-path-to-env-file/.env:/app/.env your-favorite-tag
+docker run -v <abolute-path-to-env-file>/.env:/app/.env your-favorite-tag
 ```
 
 ### Deploy bot using public DockerHub image
@@ -40,7 +40,7 @@ docker run -v <abolute-path-to-env-file/.env:/app/.env your-favorite-tag
 ```
 TELEGRAM_BOT_TOKEN=<your token>
 ```
-4. Run following commands in the root of repository
+4. Run following command in the root of repository
 ```
-docker run -v <abolute-path-to-env-file/.env:/app/.env katevi/goroscope-latest
+docker run -v <abolute-path-to-env-file>/.env:/app/.env katevi/goroscope
 ```
