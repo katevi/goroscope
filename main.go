@@ -5,9 +5,10 @@ import (
 	"log"
 	"os"
 
+	generator "goroscope/internal"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
-	"goroscope.bot/horoscope"
 )
 
 const (
@@ -39,7 +40,7 @@ func handleUpdate(ctx context.Context, update tgbotapi.Update) tgbotapi.MessageC
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
 		return msg
 	case goroscopeCommand:
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, horoscope.GenerateHoroscope())
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generator.GenerateHoroscope())
 		return msg
 	default:
 		repeatMsg := "Could you please repeat your wisdom, sir."

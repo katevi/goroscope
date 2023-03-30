@@ -1,4 +1,4 @@
-module goroscope.bot
+module goroscope
 
 go 1.20
 
