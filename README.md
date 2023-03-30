@@ -44,3 +44,5 @@ TELEGRAM_BOT_TOKEN=<your token>
 ```
 docker run -v <abolute-path-to-env-file>/.env:/app/.env katevi/goroscope
 ```
+
+You can look to this public docker image in more details at the DockerHub repository using the following [link](https://hub.docker.com/r/katevi/goroscope) which is also available via README badge.
