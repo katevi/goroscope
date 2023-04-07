@@ -6,7 +6,7 @@ This application is a simple chat bot for Telegram that will return funny horosc
 - bot is made with Go 1.20
 - bot was integrated into Telegram sybsystem via [botFather](https://telegram.me/BotFather)
 - bot functions are developed using [Telegram Bot API](https://core.telegram.org/bots/api)
-- bot is planned to be deployed to the Cloud via [Yandex Cloud Functions](https://cloud.yandex.ru/services/functions)
+- bot deployed to the Cloud via [Yandex Compute Cloud](https://cloud.yandex.ru/services/compute)
 
 ## Quick How-to
 
