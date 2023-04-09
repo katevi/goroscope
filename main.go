@@ -38,7 +38,7 @@ func main() {
 func handleUpdate(ctx context.Context, update tgbotapi.Update) tgbotapi.MessageConfig {
 	switch update.Message.Text {
 	case startCommand:
-		greetingMsg := fmt.Sprint("My greetings to your majesty.\n", help)
+		greetingMsg := fmt.Sprint("Good day to your majesty.\n", help)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
 		return msg
 	case goroscopeCommand:
