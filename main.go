@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -15,6 +16,7 @@ const (
 	tokenKey          = "TELEGRAM_BOT_TOKEN"
 	startCommand      = "/start"
 	goroscopeCommand  = "/goroscope"
+	help              = "I can give you goroscope in \"Heroes of Might and Magic\" game style. Please, enter /goroscope to get your goroscope."
 	envFileExt        = ".env"
 	timeoutForUpdates = 60
 )
@@ -36,14 +38,14 @@ func main() {
 func handleUpdate(ctx context.Context, update tgbotapi.Update) tgbotapi.MessageConfig {
 	switch update.Message.Text {
 	case startCommand:
-		greetingMsg := "Good morning to your majesty."
+		greetingMsg := fmt.Sprint("My greetings to your majesty.\n", help)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
 		return msg
 	case goroscopeCommand:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generator.GenerateHoroscope())
 		return msg
 	default:
-		repeatMsg := "Could you please repeat your wisdom, sir."
+		repeatMsg := fmt.Sprint("Could you please repeat your wisdom, sir!\n", help)
 		return tgbotapi.NewMessage(update.Message.Chat.ID, repeatMsg)
 	}
 }
