@@ -5,21 +5,33 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	generator "goroscope/internal"
+	"goroscope/internal/store"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
 
 const (
-	tokenKey          = "TELEGRAM_BOT_TOKEN"
-	startCommand      = "/start"
-	goroscopeCommand  = "/goroscope"
-	help              = "I can give you goroscope in \"Heroes of Might and Magic\" game style. Please, enter /goroscope to get your goroscope."
-	envFileExt        = ".env"
-	timeoutForUpdates = 60
+	tokenKey           = "TELEGRAM_BOT_TOKEN"
+	startCommand       = "/start"
+	goroscopeCommand   = "/goroscope"
+	subscribeCommand   = "/subscribe"
+	unsubscribeCommand = "/unsubscribe"
+	envFileExt         = ".env"
+	timeoutForUpdates  = 60
+	period             = 24
 )
+
+var help = strings.Join([]string{
+	"I can give you goroscope in \"Heroes of Might and Magic\" game style. ",
+	fmt.Sprintf("Please, enter %s to get your goroscope.", goroscopeCommand),
+	fmt.Sprintf("Please, enter %s to get new goroscope every 24h.", subscribeCommand),
+	fmt.Sprintf("Please, enter %s to stop getting new goroscopes every 24h.", unsubscribeCommand),
+}, "\n")
 
 func main() {
 	bot := configureBot()
@@ -27,26 +39,52 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = timeoutForUpdates
 	updates := bot.GetUpdatesChan(u)
+	subscribers := store.NewSubscribers()
 
+	go sendGoroscopePeriodically(bot, &subscribers)
 	for update := range updates {
-		log.Printf("A message %s was received from %v", update.Message.Text, update.Message.From)
-		msg := handleUpdate(context.Background(), update)
-		bot.Send(msg)
+		if update.Message == nil {
+			continue
+		}
+
+		if update.Message.Text != "" {
+			log.Printf("A message %s was received from %v", update.Message.Text, update.Message.From)
+			msg, newSubscribers := handleUpdate(context.Background(), update, subscribers)
+			subscribers = newSubscribers
+			bot.Send(msg)
+		}
 	}
 }
 
-func handleUpdate(ctx context.Context, update tgbotapi.Update) tgbotapi.MessageConfig {
+func sendGoroscopePeriodically(bot *tgbotapi.BotAPI, subscribers *store.Subscribers) {
+	ticker := time.NewTicker(period * time.Hour)
+	for range ticker.C {
+		log.Printf("Time ticked. Subscribers = %v\n", subscribers.All())
+		for _, subscriber := range subscribers.All() {
+			msg := tgbotapi.NewMessage(subscriber, generator.GenerateHoroscope())
+			bot.Send(msg)
+		}
+	}
+}
+
+func handleUpdate(ctx context.Context, update tgbotapi.Update, subscribers store.Subscribers) (tgbotapi.MessageConfig, store.Subscribers) {
 	switch update.Message.Text {
 	case startCommand:
 		greetingMsg := fmt.Sprint("Good day to your majesty.\n", help)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
-		return msg
+		return msg, subscribers
 	case goroscopeCommand:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generator.GenerateHoroscope())
-		return msg
+		return msg, subscribers
+	case subscribeCommand:
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Subscribed successfully! Your goroscope will be delivered within next 24h =)")
+		return msg, subscribers.Add(update.Message.Chat.ID)
+	case unsubscribeCommand:
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Unsubscribed successfully.")
+		return msg, subscribers.Rm(update.Message.Chat.ID)
 	default:
 		repeatMsg := fmt.Sprint("Could you please repeat your wisdom, sir!\n", help)
-		return tgbotapi.NewMessage(update.Message.Chat.ID, repeatMsg)
+		return tgbotapi.NewMessage(update.Message.Chat.ID, repeatMsg), subscribers
 	}
 }
 
@@ -65,6 +103,8 @@ func addCommands(bot *tgbotapi.BotAPI) {
 	myCommandsConfig := tgbotapi.SetMyCommandsConfig{Commands: []tgbotapi.BotCommand{
 		{Command: startCommand, Description: "get hello and introduction from bot"},
 		{Command: goroscopeCommand, Description: "get goroscope"},
+		{Command: subscribeCommand, Description: "get goroscope every day"},
+		{Command: unsubscribeCommand, Description: "stop getting goroscope every day"},
 	}, LanguageCode: "en"}
 
 	resp, err := bot.Request(myCommandsConfig)
@@ -76,7 +116,7 @@ func addCommands(bot *tgbotapi.BotAPI) {
 func getToken(key string) string {
 	err := godotenv.Load(envFileExt)
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Print("Error loading .env file")
 	}
 	return os.Getenv(key)
 }
