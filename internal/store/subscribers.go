@@ -1,13 +1,23 @@
 package store
 
-import "log"
+import (
+	"log"
+
+	"github.com/redis/go-redis/v9"
+)
 
 type Subscribers struct {
 	subscribers []int64
+	persister   *redis.Client
 }
 
 func NewSubscribers() Subscribers {
-	return Subscribers{subscribers: []int64{}}
+	persister := redis.NewClient(&redis.Options{
+		Addr:     "db:6379",
+		Password: "",
+		DB:       0,
+	})
+	return Subscribers{subscribers: []int64{}, persister: persister}
 }
 
 func (m *Subscribers) All() []int64 {
