@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  goroscope:
+    build:
+      context: ./
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}  
+    depends_on: 
+      - db
+
+  db:   
+    image: redis
+    ports:
+      - 6379:6379

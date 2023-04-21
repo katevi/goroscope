@@ -1,55 +1,62 @@
 package store
 
-import "log"
+import (
+	"context"
+	"fmt"
+	"log"
+	"strconv"
+
+	"github.com/redis/go-redis/v9"
+)
+
+const (
+	setKey    = "subscribers"
+	hostname  = "db"
+	redisPort = "6379"
+)
+
+var (
+	ctx                = context.Background()
+	redisServerAddress = fmt.Sprint(hostname, ":", redisPort)
+	emptyPassword      = ""
+)
 
 type Subscribers struct {
-	subscribers []int64
+	persister *redis.Client
 }
 
 func NewSubscribers() Subscribers {
-	return Subscribers{subscribers: []int64{}}
+	persister := redis.NewClient(&redis.Options{
+		Addr:     redisServerAddress,
+		Password: emptyPassword,
+		DB:       0,
+	})
+	return Subscribers{persister: persister}
 }
 
 func (m *Subscribers) All() []int64 {
-	return m.subscribers
-}
-
-func (m *Subscribers) Add(user int64) Subscribers {
-	log.Printf("Add user %v to subscribers", user)
-	if contains(m.subscribers, user) {
-		return *m
-	}
-	return Subscribers{subscribers: append(m.subscribers, user)}
-}
-
-func (m *Subscribers) Rm(user int64) Subscribers {
-	log.Printf("Start rm user %v to subscribers", user)
-	contains := false
-	var index int
-	for i, elem := range m.subscribers {
-		if elem == user {
-			log.Printf("Find user %v in subscribers, deleting...", user)
-			index = i
-			contains = true
-			break
+	array := m.persister.SMembers(ctx, setKey)
+	result := []int64{}
+	for _, a := range array.Val() {
+		userID, err := strconv.ParseInt(a, 10, 64)
+		if err != nil {
+			log.Printf("Failed to parse user id %s to int64", a)
 		}
+		result = append(result, userID)
 	}
-	if contains {
-		log.Printf("Deleting user %v from subscribers...", user)
-		return Subscribers{subscribers: remove(m.subscribers, index)}
-	}
-	return *m
+	log.Printf("All subscribers are %s\n", array.Val())
+	return result
 }
 
-func remove(slice []int64, s int) []int64 {
-	return append(slice[:s], slice[s+1:]...)
+func (m *Subscribers) Add(user int64) {
+	log.Printf("Add user %d to subscribers; set of subscribers is %s\n", user, m.persister.SMembers(ctx, setKey))
+	m.persister.SAdd(ctx, setKey, user)
+	log.Printf("Set after adding user %d = %s\n", user, m.persister.SMembers(ctx, setKey))
 }
 
-func contains(xs []int64, x int64) bool {
-	for _, elem := range xs {
-		if elem == x {
-			return true
-		}
-	}
-	return false
+func (m *Subscribers) Rm(user int64) {
+	log.Printf("Start rm user %d from subscribers; subscribers set is %v\n", user, m.persister.SMembers(ctx, setKey))
+	ctx := context.Background()
+	m.persister.SRem(ctx, setKey, user)
+	log.Printf("Set after drop user %d is %s\n", user, m.persister.SMembers(ctx, setKey))
 }
