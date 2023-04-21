@@ -49,8 +49,7 @@ func main() {
 
 		if update.Message.Text != "" {
 			log.Printf("A message %s was received from %v", update.Message.Text, update.Message.From)
-			msg, newSubscribers := handleUpdate(context.Background(), update, subscribers)
-			subscribers = newSubscribers
+			msg := handleUpdate(context.Background(), update, subscribers)
 			bot.Send(msg)
 		}
 	}
@@ -67,24 +66,26 @@ func sendGoroscopePeriodically(bot *tgbotapi.BotAPI, subscribers *store.Subscrib
 	}
 }
 
-func handleUpdate(ctx context.Context, update tgbotapi.Update, subscribers store.Subscribers) (tgbotapi.MessageConfig, store.Subscribers) {
+func handleUpdate(ctx context.Context, update tgbotapi.Update, subscribers store.Subscribers) tgbotapi.MessageConfig {
 	switch update.Message.Text {
 	case startCommand:
 		greetingMsg := fmt.Sprint("Good day to your majesty.\n", help)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, greetingMsg)
-		return msg, subscribers
+		return msg
 	case goroscopeCommand:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generator.GenerateHoroscope())
-		return msg, subscribers
+		return msg
 	case subscribeCommand:
+		subscribers.Add(update.Message.Chat.ID)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Subscribed successfully! Your goroscope will be delivered within next 24h =)")
-		return msg, subscribers.Add(update.Message.Chat.ID)
+		return msg
 	case unsubscribeCommand:
+		subscribers.Rm(update.Message.Chat.ID)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Unsubscribed successfully.")
-		return msg, subscribers.Rm(update.Message.Chat.ID)
+		return msg
 	default:
 		repeatMsg := fmt.Sprint("Could you please repeat your wisdom, sir!\n", help)
-		return tgbotapi.NewMessage(update.Message.Chat.ID, repeatMsg), subscribers
+		return tgbotapi.NewMessage(update.Message.Chat.ID, repeatMsg)
 	}
 }
 
