@@ -1,8 +1,11 @@
 version: '3.8'
 services:
   goroscope:
-    build:
-      context: ./
+    # use prepared public image for quick start
+    image: katevi/goroscope
+    # or use section with build context for development 
+    #build:             
+    #  context: ./
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}  
     depends_on: 
