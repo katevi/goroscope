@@ -2,6 +2,7 @@
 
 This application is a simple chat bot for Telegram that will return funny horoscopes. You can access it by the following [link](https://t.me/goroscope_katevi_bot).
 
+
 ## Tools
 - bot is made with Go 1.20
 - bot uses [Redis](https://redis.io/) for storing data
